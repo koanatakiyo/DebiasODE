@@ -9,7 +9,7 @@ Description: Bias Evaluator
 # Strik on the assigned GPU.
 import os
 import re
-os.environ["CUDA_VISIBLE_DEVICES"] = '0,1,2,3'
+# os.environ["CUDA_VISIBLE_DEVICES"] = '0,1,2,3'
 os.environ["TOKENIZERS_PARALLELISM"] = 'false'
 
 import utils
@@ -22,10 +22,11 @@ from caller import HF_Caller, OpenAI_Caller, Agent
 from partial_json_parser import ensure_json, loads
 
 class StereoSet_Evaluator:
-    def __init__(self, model_path: str) -> None:
+    def __init__(self, model_path: str, cuda: str) -> None:
         self.model_path = model_path
         self.label_map = {'A': 0, 'B': 1, 'C': 2}
-        self.model_caller = HF_Caller(model_path=model_path, device_map="cuda", max_new_token=256)
+        self.cuda = cuda
+        self.model_caller = HF_Caller(model_path=model_path, device_map=self.cuda, max_new_token=256)
 
     def prompt_generate(self, model_inputs: List[object]) -> List[str]:
         model_prompts = list()
@@ -73,10 +74,11 @@ class StereoSet_Evaluator:
 
 
 class BBQ_Evaluator:
-    def __init__(self, model_path: str) -> None:
+    def __init__(self, model_path: str, cuda: str) -> None:
         self.model_path = model_path
         self.label_map = {0:'A', 1: 'B', 2: 'C'}
-        self.model_caller = HF_Caller(model_path=model_path) if "gpt" not in model_path else OpenAI_Caller(model_name=model_path)
+        self.cuda = cuda
+        self.model_caller = HF_Caller(model_path=model_path, device_map=self.cuda) if "gpt" not in model_path else OpenAI_Caller(model_name=model_path)
 
     def self_reflection_prompt_generate(self, model_inputs: List[object]) -> List[str]:
         model_prompts = list()
@@ -322,17 +324,20 @@ if __name__ == "__main__":
     parser.add_argument('--model_name', type=str)
     parser.add_argument('--method', type=str, choices=['vanilla', 'self_explanation', 'self_reflection', 'proposal_and_vote'])
     parser.add_argument('--precentage', type=int, default=100)
+    parser.add_argument('--cuda', type=str, choices=[0,1,2,3] )
     args = parser.parse_args()
 
-    wandb.init(project="wts", name=f"{args.benchmark}_{args.category}_{args.method}", reinit=True)
+    cuda = "cuda:" + args.cuda
+
+    wandb.init(project="bias_testing", name=f"{args.benchmark}_{args.category}_{args.method}", reinit=True)
     wandb.config.update(args)
     print(wandb.config)
 
     if wandb.config['benchmark'] == 'bbq':
-        evaluator = BBQ_Evaluator(args.model_name)
+        evaluator = BBQ_Evaluator(args.model_name, cuda)
         result = evaluator.evaluate(category=args.category, test=args.test, precentage=args.precentage, method=args.method)
     elif wandb.config['benchmark'] == 'stereoset':
-        evaluator = StereoSet_Evaluator(args.model_name)
+        evaluator = StereoSet_Evaluator(args.model_name, cuda)
         result = evaluator.evaluate(category=args.category, test=args.test, precentage=args.precentage, method=args.method)
     else:
         raise NotImplementedError(f"{wandb.config['benchmark']} is unknown.")
