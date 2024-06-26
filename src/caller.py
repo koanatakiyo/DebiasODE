@@ -30,6 +30,7 @@ class HF_Caller(Caller):
             bnb_4bit_compute_dtype=torch.bfloat16,
             
         )
+        self.device_map = device_map
         self.model = AutoModelForCausalLM.from_pretrained(self.model_path, device_map=self.device_map, quantization_config=nf4_config)
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)
     

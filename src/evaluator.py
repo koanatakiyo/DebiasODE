@@ -324,7 +324,7 @@ if __name__ == "__main__":
     parser.add_argument('--model_name', type=str)
     parser.add_argument('--method', type=str, choices=['vanilla', 'self_explanation', 'self_reflection', 'proposal_and_vote'])
     parser.add_argument('--precentage', type=int, default=100)
-    parser.add_argument('--cuda', type=str, choices=[0,1,2,3] )
+    parser.add_argument('--cuda', type=str, choices=["0","1","2","3"])
     args = parser.parse_args()
 
     cuda = "cuda:" + args.cuda
@@ -332,6 +332,7 @@ if __name__ == "__main__":
     wandb.init(project="bias_testing", name=f"{args.benchmark}_{args.category}_{args.method}", reinit=True)
     wandb.config.update(args)
     print(wandb.config)
+
 
     if wandb.config['benchmark'] == 'bbq':
         evaluator = BBQ_Evaluator(args.model_name, cuda)
