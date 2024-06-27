@@ -36,7 +36,6 @@ class StereoSet_Evaluator:
 
     def evaluate(self, category: str) -> Dict:
         self.dataset = load_dataset("McGill-NLP/stereoset", 'intersentence')['validation']
-
         self.count_map = {
             "total": 0,
             "related": 0,
@@ -339,7 +338,7 @@ if __name__ == "__main__":
         result = evaluator.evaluate(category=args.category, test=args.test, precentage=args.precentage, method=args.method)
     elif wandb.config['benchmark'] == 'stereoset':
         evaluator = StereoSet_Evaluator(args.model_name, cuda)
-        result = evaluator.evaluate(category=args.category, test=args.test, precentage=args.precentage, method=args.method)
+        result = evaluator.evaluate(category=args.category)
     else:
         raise NotImplementedError(f"{wandb.config['benchmark']} is unknown.")
 
