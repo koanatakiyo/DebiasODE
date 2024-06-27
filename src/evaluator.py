@@ -324,7 +324,7 @@ if __name__ == "__main__":
     parser.add_argument('--model_name', type=str)
     parser.add_argument('--method', type=str, choices=['vanilla', 'self_explanation', 'self_reflection', 'proposal_and_vote'])
     parser.add_argument('--precentage', type=int, default=100)
-    parser.add_argument('--cuda', type=str, choices=["0","1","2","3"])
+    parser.add_argument('--cuda', type=str, choices=["0","1","2","3","4","5","6","7"])
     args = parser.parse_args()
 
     cuda = "cuda:" + args.cuda
