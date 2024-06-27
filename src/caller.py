@@ -20,9 +20,10 @@ class Caller(ABC):
     def generate(self, model_inputs: List[str]) -> List[str]: pass 
 
 class HF_Caller(Caller):
-    def __init__(self, model_path: str, device_map: str) -> None:
+    def __init__(self, model_path: str, device_map: str, max_new_token: int) -> None:
         super().__init__()
         self.model_path = model_path
+        self.max_new_token = max_new_token
         nf4_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
