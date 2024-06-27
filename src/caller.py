@@ -19,6 +19,7 @@ class Caller(ABC):
     @abstractmethod
     def generate(self, model_inputs: List[str]) -> List[str]: pass 
 
+
 class HF_Caller(Caller):
     def __init__(self, model_path: str, device_map: str, max_new_token: int) -> None:
         super().__init__()
