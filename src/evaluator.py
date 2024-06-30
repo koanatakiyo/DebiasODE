@@ -91,7 +91,7 @@ class StereoSet_Evaluator:
         for instance in tqdm(self.dataset):
             # try:
             if instance['bias_type'] == category:
-                # self.count_map['total'] += 1
+                self.count_map['total'] += 1
                 # prompt = self.prompt_generate([instance])[0]
                 label = instance['sentences']['gold_label']
                 prompt = self.prompt_generate([instance])[0]
@@ -317,9 +317,9 @@ class BBQ_Evaluator:
             raw_result = self.model_caller.generate(prompt, max_new_token=max_new_token)[0][len(prompt):].strip()
             if "Phi" in self.model_path and "###" in raw_result:
                 raw_result = re.findall(r'### (\w+)\n(.*?)\n\n', raw_result, re.DOTALL)[0][1]
-            elif "mistral" in self.model_path:
-                filteded_string = re.sub(' +', ' ', raw_result).split("\n")[1].strip(",")
-                raw_result = "{" + filteded_string + "}" #the "{answer: choice}"
+            # elif "mistral" in self.model_path:
+            #     filteded_string = re.sub(' +', ' ', raw_result).split("\n")[1].strip(",")
+            #     raw_result = "{" + filteded_string + "}" #the "{answer: choice}"
             else:
                 raw_result = self.model_caller.stop_at_stop_token(["\n"], raw_result).strip()
         result_json = loads(ensure_json(raw_result))
