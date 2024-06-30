@@ -139,11 +139,12 @@ class StereoSet_Evaluator:
 
 
 class BBQ_Evaluator:
+
     def __init__(self, model_path: str, cuda: str) -> None:
         self.model_path = model_path
         self.label_map = {0:'A', 1: 'B', 2: 'C'}
         self.cuda = cuda
-        self.model_caller = HF_Caller(model_path=model_path, device_map=self.cuda) if "gpt" not in model_path else OpenAI_Caller(model_name=model_path)
+        self.model_caller = HF_Caller(model_path=model_path, device_map=self.cuda, max_new_token=256) if "gpt" not in model_path else OpenAI_Caller(model_name=model_path)
 
     def self_reflection_prompt_generate(self, model_inputs: List[object]) -> List[str]:
         model_prompts = list()
