@@ -12,7 +12,7 @@ import re
 # os.environ["CUDA_VISIBLE_DEVICES"] = '0,1,2,3'
 os.environ["TOKENIZERS_PARALLELISM"] = 'false'
 
-os.environ["WANDB_SILENT"] = "true"
+# os.environ["WANDB_SILENT"] = "true"
 
 import utils
 import wandb
