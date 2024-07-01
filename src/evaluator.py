@@ -35,11 +35,18 @@ class StereoSet_Evaluator:
             raw_result = self.model_caller.generate([{"role":"user", "content": prompt}]).strip()
         else:
             raw_result = self.model_caller.generate(prompt, max_new_token=max_new_token)[0][len(prompt):].strip()
+
             if "Phi" in self.model_path and "###" in raw_result:
-                raw_result = re.findall(r'### (\w+)\n(.*?)\n\n', raw_result, re.DOTALL)[0][1]
+                remove_dash = re.sub('### ', '', raw_result)
+                answer_start = re.search('"answer"', remove_dash).start()
+                curlly_end = re.search('}', remove_dash).start()
+                answer_raw_result = remove_dash[answer_start-1: curlly_end+1] #the "{answer: choice}"
+                raw_result = answer_raw_result
+
             elif "mistral" in self.model_path:
                 filteded_string = re.sub(' +', ' ', raw_result).split("\n")[1].strip(",")
                 raw_result = "{" + filteded_string + "}" #the "{answer: choice}"
+
             else: 
                 raw_result = self.model_caller.stop_at_stop_token(["\n"], raw_result).strip()
         try:
@@ -47,9 +54,6 @@ class StereoSet_Evaluator:
 
         except Exception as e:
             print(e + "try times: " + try_time)
-            # if try_time > 4:
-            #     print("why")
-            # print(raw_result)
 
         print("Response: ", result_json)
         return result_json
@@ -96,10 +100,6 @@ class StereoSet_Evaluator:
                 label = instance['sentences']['gold_label']
                 prompt = self.prompt_generate([instance])[0]
 
-                # raw_result = self.model_caller.generate([prompt])[0][len(prompt):].strip()
-                # raw_result = self.model_caller.stop_at_stop_token(["\n"], raw_result).strip()
-                # result = loads(ensure_json(raw_result))
-                # answer_label = self.label_map[result['answer']]
                 try_time = 0
                 while try_time <= 5:
                     try:
@@ -251,9 +251,6 @@ class BBQ_Evaluator:
         return answer
     
     def proposal_and_vote_inference(self, instance: object) -> str:
-        # age_agent = Agent("gpt-4-1106-preview", "OA", "age")
-        # religion_agent = Agent("gpt-4-1106-preview", "OA", "religion")
-        # gender_agent = Agent("gpt-4-1106-preview", "OA", "gender")
 
         age_agent = Agent(self.model_caller, "HF", "age")
         religion_agent = Agent(self.model_caller, "HF", "religion")
@@ -316,10 +313,14 @@ class BBQ_Evaluator:
         else:
             raw_result = self.model_caller.generate(prompt, max_new_token=max_new_token)[0][len(prompt):].strip()
             if "Phi" in self.model_path and "###" in raw_result:
-                raw_result = re.findall(r'### (\w+)\n(.*?)\n\n', raw_result, re.DOTALL)[0][1]
-            # elif "mistral" in self.model_path:
-            #     filteded_string = re.sub(' +', ' ', raw_result).split("\n")[1].strip(",")
-            #     raw_result = "{" + filteded_string + "}" #the "{answer: choice}"
+                remove_dash = re.sub('### ', '', raw_result)
+                answer_start = re.search('"answer"', remove_dash).start()
+                curlly_end = re.search('}', remove_dash).start()
+                answer_raw_result = remove_dash[answer_start-1: curlly_end+1] #the "{answer: choice}"
+                raw_result = answer_raw_result
+            elif "mistral" in self.model_path:
+                filteded_string = re.sub(' +', ' ', raw_result).split("\n")[1].strip(",")
+                raw_result = "{" + filteded_string + "}" #the "{answer: choice}"
             else:
                 raw_result = self.model_caller.stop_at_stop_token(["\n"], raw_result).strip()
         result_json = loads(ensure_json(raw_result))
@@ -339,47 +340,47 @@ class BBQ_Evaluator:
             if instance['context_condition'] == test:
                 self.count_map['total'] += 1
                 try_time = 0
-                while True:
-                    try:
-                        # Inference
-                        if method == "vanilla":
-                            prompt = self.vanilla_prompt_generate([instance])[0]
+
+                if method == "vanilla":
+                    
+                    prompt = self.vanilla_prompt_generate([instance])[0]
+                    
+                    # Inference
+                    while True:
+                        try:
+
                             answer = self.vanilla_inference(instance, prompt)
-                        elif method == "self_explanation":
-                            answer = self.self_explanation_inference(instance)
-                        elif method == "self_reflection":
-                            answer = self.self_reflection_inference(instance)
-                        elif method == "proposal_and_vote":
-                            answer = self.proposal_and_vote_inference(instance)
-                        else:
-                            raise NotImplementedError(f"Unknown method: {method}")
-                        
-                        answer_label = self.label_map[instance['answer_label']]
-                        target_label = self.label_map[instance['target_label']]
-                        print(answer, answer_label, target_label)
-                        
-                        if answer not in ["A", "B", "C"]:
-                            raise Exception("Output Error")
 
-                        # Evaluation
-                        if answer == answer_label:
-                            self.count_map['correct'] += 1
-                        else:
-                            self.count_map['total_no'] += 1
-                            if answer == target_label:
-                                self.count_map['biased'] += 1
-                        
-                        break
-
-                    except Exception as e:
-                        
-                        try_time += 1 # try at lease 5 times and see if the result matches
-
-                        if try_time == 6: # tried 5 times
-                            self.count_map['error'] += 1
-                            print({"Error": repr(e)})
+                            answer_label = self.label_map[instance['answer_label']]
+                            target_label = self.label_map[instance['target_label']]
+                            print(answer, answer_label, target_label)
                             
+                            if answer not in ["A", "B", "C"]:
+                                raise Exception("Output Error")
+
+                            # Evaluation
+                            if answer == answer_label:
+                                self.count_map['correct'] += 1
+                            else:
+                                self.count_map['total_no'] += 1
+                                if answer == target_label:
+                                    self.count_map['biased'] += 1
                             break
+
+                        except Exception as e:
+                        
+                            try_time += 1 # try at lease 5 times and see if the result matches
+
+                            if try_time == 6: # tried 5 times
+                                self.count_map['error'] += 1
+                                print({"Error": repr(e)})
+
+                                break
+
+                else:
+                    raise NotImplementedError(f"Unknown method: {method}")
+
+
                         
             print("==========" * 5)
     
@@ -407,9 +408,17 @@ if __name__ == "__main__":
     parser.add_argument('--cuda', type=str, choices=["0","1","2","3","4","5","6","7"])
     args = parser.parse_args()
 
+    abbv_model_name = args.model_name
+    if "mistralai/Mistral-7B-Instruct-v0.3" in args.model_name:
+        abbv_model_name = "Mistral"
+    elif "microsoft/Phi-3-mini-4k-instruct" in args.model_name:
+        abbv_model_name = "phi3"
+    elif "Meta-Llama-3-8B" in args.model_name:
+        abbv_model_name = "llama3"
+
     cuda = "cuda:" + args.cuda
 
-    wandb.init(project="bias_testing", name=f"{args.benchmark}_{args.category}_{args.method}", reinit=True)
+    wandb.init(project="bias_testing", name=f"{args.benchmark}_{args.category}_{abbv_model_name}", reinit=True)
     wandb.config.update(args)
     print(wandb.config)
 
