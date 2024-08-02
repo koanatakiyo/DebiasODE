@@ -437,5 +437,3 @@ if __name__ == "__main__":
     wandb.log({"result": result})
     print(result)
     # wandb.finish()
-
-
