@@ -420,6 +420,7 @@ if __name__ == "__main__":
 
     cuda = "cuda:" + args.cuda
 
+    wandb.require("core") # for silence
     wandb.init(project="bias_testing", name=f"{args.benchmark}_{args.category}_{abbv_model_name}", reinit=True)
     wandb.config.update(args)
     print(wandb.config)
