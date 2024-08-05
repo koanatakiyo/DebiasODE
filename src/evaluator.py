@@ -140,6 +140,15 @@ class StereoSet_Evaluator:
                 "error": self.count_map['error']}
 
 
+class Crowspair_Evaluator:
+
+    def __init__(self, model_path: str, cuda: str) -> None:
+            self.model_path = model_path
+            self.label_map = {0:'A', 1: 'B', 2: 'C'}
+            self.cuda = cuda
+            self.model_caller = HF_Caller(model_path=model_path, device_map=self.cuda, max_new_token=256) if "gpt" not in model_path else OpenAI_Caller(model_name=model_path)
+
+
 class BBQ_Evaluator:
 
     def __init__(self, model_path: str, cuda: str) -> None:
@@ -421,7 +430,7 @@ if __name__ == "__main__":
     cuda = "cuda:" + args.cuda
 
     wandb.require("core") # for silence
-    wandb.init(project="bias_testing", name=f"{args.benchmark}_{args.category}_{abbv_model_name}", reinit=True)
+    wandb.init(project="bias_testing", name=f"{args.benchmark}_{args.category}_{abbv_model_name}_{args.test}", reinit=True)
     wandb.config.update(args)
     print(wandb.config)
 
