@@ -21,7 +21,7 @@ class Caller(ABC):
 
 
 class HF_Caller(Caller):
-    def __init__(self, model_path: str, device_map: str, max_new_token: int) -> None:
+    def __init__(self, model_path: str, max_new_token: int,) -> None:
         super().__init__()
         self.model_path = model_path
         self.max_new_token = max_new_token
@@ -32,8 +32,9 @@ class HF_Caller(Caller):
             bnb_4bit_compute_dtype=torch.bfloat16,
             
         )
-        self.device_map = device_map
-        self.model = AutoModelForCausalLM.from_pretrained(self.model_path, device_map=self.device_map, quantization_config=nf4_config)
+        # self.device_map = device_map
+        # self.model = AutoModelForCausalLM.from_pretrained(self.model_path, device_map=self.device_map, quantization_config=nf4_config)
+        self.model = AutoModelForCausalLM.from_pretrained(self.model_path, device_map="auto", quantization_config=nf4_config)
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_path)
     
     def stop_at_stop_token(self, stop_words, decoded_string: str) -> str:
@@ -45,7 +46,7 @@ class HF_Caller(Caller):
         return decoded_string[:min_stop_index]
     
     def generate(self, input: str, max_new_token=256) -> List[str]:
-        model_input = self.tokenizer(input, return_tensors="pt").to(self.device_map)
+        model_input = self.tokenizer(input, return_tensors="pt").to('cuda')
         generated_ids = self.model.generate(
             **model_input, 
             pad_token_id=self.tokenizer.eos_token_id, 
